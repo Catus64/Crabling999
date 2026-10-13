@@ -1,28 +1,30 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"os"
 
-	"github.com/Catus64/repo-observer/api/internal/gitrepo"
 	"github.com/Catus64/repo-observer/api/internal/router"
 )
 
+func setupLogger() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	slog.SetDefault(logger)
+}
+
 func main() {
-	repoPath := os.Getenv("REPO_PATH")
-	if repoPath == "" {
-		log.Fatal("REPO_PATH is not set")
-	}
 
-	repo, err := gitrepo.Open(repoPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	setupLogger()
 
-	r := router.New(repo)
+	slog.Info("starting server", "repo_path", os.Getenv("REPO_PATH"))
+
+	r := router.New()
 
 	if err := r.Run(":8080"); err != nil {
-		log.Fatal(err)
+		slog.Error("failed to run server", "error", err)
+		os.Exit(1)
 	}
 
 }
